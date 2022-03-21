@@ -4,7 +4,10 @@ CC = clang
 
 CFLAGS = -I$(HDIR)
 
-SRCS = main.c
+SRCS =	main.c\
+		utils.c\
+		argparse.c\
+		help.c\
 
 HDIR = head/
 

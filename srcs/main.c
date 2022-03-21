@@ -5,79 +5,16 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <stdlib.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "args.h"
-
-int help()
-{
-	printf("Usage: `tony-packer [options] <binary>` (-h for help)\n");
-	return 1;
-}
-
-int full_help()
-{
-	printf("\n-h / --help				| show help\n\
--k <key> / --key <key>			| use custom key \n");
-	return 1;
-}
-
-int print_error(char *str)
-{
-	if (str == NULL)
-		printf("%s%s\n", ERRORTEMPLATE, strerror(errno));
-	else
-		printf("%s%s\n", ERRORTEMPLATE, str);
-	return 1;
-}
-
-enum argID
-{
-	eEXE_NAME,
-	eKEY,
-	eHELP,
-	eUNKNOWN
-};
-
-enum argID switch_str_arg(char *str)
-{
-	if (strcmp(str, "-k") == 0)	return eKEY;
-	if (strcmp(str, "-h") == 0 || strcmp(str, "--help") == 0) return eHELP;
-
-	return eUNKNOWN;
-}
-
-t_args *getargs(int argc, char **argv)
-{
-	t_args *args;
-
-	if (!(args = malloc(sizeof(t_args)))) {
-		print_error(NULL);
-		return NULL;
-	}
-	memset(args, 0, sizeof(t_args));
-	
-	for (int i = 1; i < argc ; ++i) {
-		switch (switch_str_arg(argv[i])) {
-			/* -k <key> */
-			case eKEY: { if (i + 1 == argc) { free(args); print_error("-k: expected key as next argument"); return NULL; } else { args->key = argv[i + 1]; ++i; } break; }
-			/* -h --help */
-			case eHELP: { help(); full_help(); free(args); return NULL; break; }
-			/* binary or unknown argument */
-			default: { if (i == argc - 1) { args->exe_name = argv[argc - 1]; } else { free(args); printf("%s%s: unknown argument\n", ERRORTEMPLATE, argv[i]); return NULL; } break; }
-		}
-	}
-
-	if (args->exe_name == NULL) {
-		print_error("binary not supplied");
-		free(args);
-		return NULL;
-	}
-
-	return args;
-}
+#include "utils.h"
 
 int main(int argc, char **argv)
 {
 	int fd;
+	unsigned char *mptr;
 	t_args *args;
 
 	if (argc < 2)
@@ -86,10 +23,32 @@ int main(int argc, char **argv)
 	if ((args = getargs(argc, argv)) == NULL)
 		return 1; // error will already have been printed
 
-	if ((fd = open(args->exe_name, 0)) == -1)
-		return print_error(NULL);
-	//mmap
+	if ((fd = open(args->exe_name, O_RDONLY)) == -1) {
+		print_error(args->exe_name);
+		free(args);
+		return 1;
+	}
+
+	// get length of exe
+	struct stat statbuf;
+	syscall(SYS_fstat, fd, &statbuf);
+
+	if ((mptr = mmap(NULL, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0)) == MAP_FAILED) {
+		print_error("mmap");
+		free(args);
+		return 1;
+	}
+
 	close(fd);
 
+	// printf("%s\n", mptr);
+
+	if (munmap(mptr, statbuf.st_size) != 0) {
+		print_error(NULL);
+		free(args);
+		return 1;
+	}
+
+	free(args);
 	return 0;
 }

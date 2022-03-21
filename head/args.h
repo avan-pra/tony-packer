@@ -10,6 +10,7 @@ typedef struct s_args
 
 }				t_args;
 
+t_args *getargs(int argc, char **argv);
 
 #endif
 
