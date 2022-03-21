@@ -1,10 +1,12 @@
-NAME = tony-paker
+NAME = tony-packer
 
 CC = clang
 
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -I$(HDIR)
 
 SRCS = main.c
+
+HDIR = head/
 
 OBJS = $(addprefix srcs/, $(SRCS:.c=.o))
 
