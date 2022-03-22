@@ -9,6 +9,8 @@ int help()
 int full_help()
 {
 	printf("\n-h / --help				| show help\n\
--k <key> / --key <key>			| use custom key \n");
+-k <key> / --key <key>			| use custom key \n\
+-o <file> / --output <file>		| specify output file\n\
+-v / --verbose				| verbose output\n");
 	return 1;
 }

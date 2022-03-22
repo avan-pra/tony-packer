@@ -8,6 +8,7 @@ SRCS =	main.c\
 		utils.c\
 		argparse.c\
 		help.c\
+		tony.c\
 
 HDIR = head/
 
@@ -16,7 +17,7 @@ OBJS = $(addprefix srcs/, $(SRCS:.c=.o))
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+	$(CC) $(CFLAGS) -lssl -lcrypto $(OBJS) -o $(NAME)
 
 clean:
 	rm -f $(OBJS)
