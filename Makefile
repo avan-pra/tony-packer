@@ -2,13 +2,15 @@ NAME = tony-packer
 
 CC = clang
 
-CFLAGS = -I$(HDIR)
+CFLAGS = -I$(HDIR) -m32
 
 SRCS =	main.c\
 		utils.c\
 		argparse.c\
 		help.c\
 		tony.c\
+\
+		elf.c\
 
 HDIR = head/
 
