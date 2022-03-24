@@ -36,7 +36,7 @@ int pack(t_args *args)
 	unsigned char *inptr, *ofptr;
 	struct stat statbuf; // get exe_name file_size with lseek trick
 	int ret = 0;
-	int size;
+	size_t size;
 
 	/* setup input file */
 	if ((in = open(args->exe_name, O_RDONLY)) == -1) {
@@ -46,7 +46,7 @@ int pack(t_args *args)
 	syscall(SYS_fstat, in, &statbuf);
 	size = statbuf.st_size;
 	if (size == 0) {
-		print_error("File format unknown"); free(args); close(in);
+		print_error("Unknown file format"); free(args); close(in);
 		return 1;
 	}
 	if ((inptr = mmap(NULL, size, PROT_READ, MAP_SHARED, in, 0)) == MAP_FAILED) {
@@ -56,7 +56,7 @@ int pack(t_args *args)
 	close(in);
 
 	/* setup output file */
-	if ((of = open(args->out_exe, O_RDWR | O_CREAT | O_TRUNC, 0744)) == -1) {
+	if ((of = open(args->out_exe, O_RDWR | O_CREAT, 0744)) == -1) {
 		print_error(args->out_exe); free(args); munmap(inptr, size);
 		return 1;
 	}
@@ -64,12 +64,14 @@ int pack(t_args *args)
 		print_error("mmap"); free(args); munmap(inptr, size); close(of);
 		return 1;
 	}
+	lseek(of, size - 1, SEEK_SET);
+	write(of, "", 1);
 	close(of);
 
 	enum formats f = find_file_format(inptr);
 	switch (f) {
-		case eELF: { printf("[+] Got file format: ELF\n"); /* ret = stubify_elf(); */ break; }
-		default: { ret = print_error("File format unknown"); }
+		case eELF: { printf("[+] Got file format: ELF\n"); ret = pack_elf(inptr, ofptr, size, args); break; }
+		default: { ret = print_error("Unknown file format"); }
 	}
 
 	munmap(inptr, size);

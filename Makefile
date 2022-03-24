@@ -2,7 +2,7 @@ NAME = tony-packer
 
 CC = clang
 
-CFLAGS = -I$(HDIR)
+CFLAGS = -I$(HDIR) -g
 
 SRCS =	main.c\
 		utils.c\
