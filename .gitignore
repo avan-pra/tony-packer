@@ -7,3 +7,4 @@ sample.c
 .vscode/
 peda*
 .gdb*
+shellcode.s
