@@ -2,7 +2,7 @@ NAME = tony-packer
 
 CC = clang
 
-CFLAGS = -I$(HDIR) -g
+CFLAGS = -I$(HDIR) -g # -fno-stack-protector -z execstack
 
 SRCS =	main.c\
 		utils.c\

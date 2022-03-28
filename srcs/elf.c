@@ -35,9 +35,14 @@ int pack_elf(unsigned char *in, unsigned char *out, size_t size, t_args *args)
 		elfshdr = (void*)in + elfhdr->e_shoff + (i * elfhdr->e_shentsize);
 		memcpy(paste_location, elfshdr, elfhdr->e_shentsize);
 
-		memcpy(out + elfshdr->sh_offset, in + elfshdr->sh_offset, elfshdr->sh_size);
-		// printf("%ld\n", elfshdr->sh_offset);
+		// printf("%lu | %lu\n", elfshdr->sh_offset, elfshdr->sh_size);
+		if (elfshdr->sh_type != SHT_NOBITS)
+			memcpy(out + elfshdr->sh_offset, in + elfshdr->sh_offset, elfshdr->sh_size);
 	}
+	// char *str = "\x6a\x41\xbf\x01\x00\x00\x00\x48\x89\xe6\xba\x04\x00\x00\x00\xb8\x01\x00\x00\x00\x0f\x05\x48\x83\xc4\x04";
 
+	// (*(void(*)()) str)();
+
+	// memcpy(out + size - 1 - 27, str, 27);
 	return 0;
 }
