@@ -5,3 +5,5 @@ woody
 a.out
 sample.c
 .vscode/
+peda*
+.gdb*
