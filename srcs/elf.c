@@ -12,16 +12,30 @@
 #include "args.h"
 #include "utils.h"
 
-int pack_elf(unsigned char *in, unsigned char *out, size_t size, t_args *args)
+Elf64_Phdr *get_text_segment(const unsigned char *in)
+{
+	Elf64_Phdr *elfphdr;
+
+	for (size_t i = 0; i < ((Elf64_Ehdr*)in)->e_phnum; ++i)
+	{
+		elfphdr = (void*)in + ((Elf64_Ehdr*)in)->e_phoff + (i * ((Elf64_Ehdr*)in)->e_phentsize);
+		if (elfphdr->p_type == PT_LOAD && elfphdr->p_flags == (PF_R | PF_X))
+			return elfphdr;
+	}
+	return NULL;
+}
+
+static void copy_elf_header(const unsigned char *in, unsigned char *out)
+{
+	memcpy(out, in, sizeof(Elf64_Ehdr));
+}
+
+static void copy_program(const unsigned char *in, unsigned char *out)
 {
 	Elf64_Ehdr *elfhdr = (void*)in;
-	Elf64_Phdr *elfphdr = (void*)in + elfhdr->e_phoff;
-	Elf64_Shdr *elfshdr = (void*)in + elfhdr->e_shoff;
+	Elf64_Phdr *elfphdr;
 	void *paste_location;
 
-	// memset(out, 0, size);
-
-	memcpy(out, elfhdr, sizeof(Elf64_Ehdr));
 	for (size_t i = 0; i < elfhdr->e_phnum; ++i) {
 		paste_location = (void*)out + elfhdr->e_shoff + (i * elfhdr->e_shentsize);
 		elfphdr = (void*)in + elfhdr->e_phoff + (i * elfhdr->e_phentsize);
@@ -29,20 +43,36 @@ int pack_elf(unsigned char *in, unsigned char *out, size_t size, t_args *args)
 
 		memcpy(out + elfphdr->p_offset, in + elfphdr->p_offset, elfphdr->p_filesz);
 	}
+}
+
+static void copy_section(const unsigned char *in, unsigned char *out)
+{
+	Elf64_Ehdr *elfhdr = (void*)in;
+	Elf64_Shdr *elfshdr;
+	void *paste_location;
 
 	for (size_t i = 0; i < elfhdr->e_shnum; ++i) {
 		paste_location = (void*)out + elfhdr->e_shoff + (i * elfhdr->e_shentsize);
 		elfshdr = (void*)in + elfhdr->e_shoff + (i * elfhdr->e_shentsize);
 		memcpy(paste_location, elfshdr, elfhdr->e_shentsize);
 
-		// printf("%lu | %lu\n", elfshdr->sh_offset, elfshdr->sh_size);
 		if (elfshdr->sh_type != SHT_NOBITS)
 			memcpy(out + elfshdr->sh_offset, in + elfshdr->sh_offset, elfshdr->sh_size);
 	}
-	// char *str = "\x6a\x41\xbf\x01\x00\x00\x00\x48\x89\xe6\xba\x04\x00\x00\x00\xb8\x01\x00\x00\x00\x0f\x05\x48\x83\xc4\x04";
+}
 
-	// (*(void(*)()) str)();
+int pack_elf(unsigned char *in, unsigned char *out, size_t size, t_args *args)
+{
+	Elf64_Ehdr *elfhdr = (void*)in;
+	Elf64_Phdr *elfphdr = (void*)in + elfhdr->e_phoff;
+	Elf64_Shdr *elfshdr = (void*)in + elfhdr->e_shoff;
+	void *paste_location;
 
-	// memcpy(out + size - 1 - 27, str, 27);
+	copy_elf_header(in, out);
+
+	copy_program(in, out);
+
+	copy_section(in, out);
+
 	return 0;
 }
