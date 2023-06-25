@@ -39,8 +39,10 @@ static void copy_program(const unsigned char *in, unsigned char *out)
 	for (size_t i = 0; i < elfhdr->e_phnum; ++i) {
 		paste_location = (void*)out + elfhdr->e_shoff + (i * elfhdr->e_shentsize);
 		elfphdr = (void*)in + elfhdr->e_phoff + (i * elfhdr->e_phentsize);
+		// copy header
 		memcpy(paste_location, elfphdr, elfhdr->e_phentsize);
 
+		// copy content
 		memcpy(out + elfphdr->p_offset, in + elfphdr->p_offset, elfphdr->p_filesz);
 	}
 }
@@ -54,8 +56,10 @@ static void copy_section(const unsigned char *in, unsigned char *out)
 	for (size_t i = 0; i < elfhdr->e_shnum; ++i) {
 		paste_location = (void*)out + elfhdr->e_shoff + (i * elfhdr->e_shentsize);
 		elfshdr = (void*)in + elfhdr->e_shoff + (i * elfhdr->e_shentsize);
+		// copy header
 		memcpy(paste_location, elfshdr, elfhdr->e_shentsize);
 
+		// copy content
 		if (elfshdr->sh_type != SHT_NOBITS)
 			memcpy(out + elfshdr->sh_offset, in + elfshdr->sh_offset, elfshdr->sh_size);
 	}
@@ -73,6 +77,8 @@ int pack_elf(unsigned char *in, unsigned char *out, size_t size, t_args *args)
 	copy_program(in, out);
 
 	copy_section(in, out);
+
+	get_text_segment(out)->p_flags = (PF_R | PF_W | PF_X);
 
 	return 0;
 }
